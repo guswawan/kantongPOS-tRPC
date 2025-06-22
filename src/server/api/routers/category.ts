@@ -2,8 +2,8 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { type Category } from "@prisma/client";
 
-//query -> fetching data
-//mutation -> changing data(create, update, delete)
+//query -> fetching data (GET)
+//mutation -> changing data(create, update, delete) (POST, PUT, DELETE)
 
 export const categoryRouter = createTRPCRouter({
   getCategories: protectedProcedure.query(async ({ ctx }) => {
@@ -21,7 +21,7 @@ export const categoryRouter = createTRPCRouter({
   createCategory: protectedProcedure
     .input(
       z.object({
-        name: z.string().min(3, "Min 3 characters"),
+        name: z.string().min(3, "Minimum of 3 characters"),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -37,5 +37,27 @@ export const categoryRouter = createTRPCRouter({
       });
 
       return newCategory;
+    }),
+
+  deleteCategoryById: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.category.delete({
+        where: { id: input.id },
+      });
+    }),
+
+  editCategoryById: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string().min(3, "Minimum of 3 characters"),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.category.update({
+        where: { id: input.id },
+        data: { name: input.name },
+      });
     }),
 });

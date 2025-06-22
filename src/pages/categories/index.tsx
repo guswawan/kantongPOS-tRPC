@@ -31,10 +31,12 @@ import { type Category } from "@prisma/client";
 type CategoryData = Pick<Category, "id" | "name" | "productCount">;
 
 const CategoriesPage: NextPageWithLayout = () => {
+  const apiUtils = api.useUtils();
   const [createCategoryDialogOpen, setCreateCategoryDialogOpen] =
     useState(false);
   const [editCategoryDialogOpen, setEditCategoryDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [categoryToEdit, setCategoryToEdit] = useState<string | null>(null);
 
   const createCategoryForm = useForm<CategoryFormSchema>({
     resolver: zodResolver(categoryFormSchema),
@@ -48,18 +50,64 @@ const CategoriesPage: NextPageWithLayout = () => {
     api.category.getCategories.useQuery();
 
   const { mutate: createCategory, isPending: isCreatingCategory } =
-    api.category.createCategory.useMutation();
+    api.category.createCategory.useMutation({
+      onSuccess: async () => {
+        await apiUtils.category.getCategories.invalidate();
+
+        alert("Category created successfully");
+        setCreateCategoryDialogOpen(false);
+        createCategoryForm.reset();
+      },
+      onError: () => {
+        alert("Category creation failed!");
+      },
+    });
+
+  const { mutate: deleteCategoryById, isPending: isDeletingCategory } =
+    api.category.deleteCategoryById.useMutation({
+      onSuccess: async () => {
+        await apiUtils.category.getCategories.invalidate();
+
+        alert("Category deleted successfully");
+        setCategoryToDelete(null);
+      },
+      onError: () => {
+        alert("Category deletion failed!");
+      },
+    });
+
+  const { mutate: editCategoryById, isPending: isEditingCategory } =
+    api.category.editCategoryById.useMutation({
+      onSuccess: async () => {
+        await apiUtils.category.getCategories.invalidate();
+
+        alert("Category edited successfully");
+        setEditCategoryDialogOpen(false);
+        setCategoryToEdit(null);
+        editCategoryForm.reset();
+      },
+      onError: () => {
+        alert("Category editing failed!");
+      },
+    });
 
   const handleSubmitCreateCategory = (data: CategoryFormSchema) => {
     createCategory({ name: data.name });
   };
 
   const handleSubmitEditCategory = (data: CategoryFormSchema) => {
-    console.log(data);
+    if (categoryToEdit) {
+      editCategoryById({
+        id: categoryToEdit,
+        name: data.name,
+      });
+    }
   };
 
   const handleClickEditCategory = (category: CategoryData) => {
     setEditCategoryDialogOpen(true);
+    setCategoryToEdit(category.id);
+
     editCategoryForm.reset({
       name: category.name,
     });
@@ -67,6 +115,12 @@ const CategoriesPage: NextPageWithLayout = () => {
 
   const handleClickDeleteCategory = (categoryId: string) => {
     setCategoryToDelete(categoryId);
+  };
+
+  const handleConfirmDeleteCategory = () => {
+    if (categoryToDelete) {
+      deleteCategoryById({ id: categoryToDelete });
+    }
   };
 
   return (
@@ -136,15 +190,17 @@ const CategoriesPage: NextPageWithLayout = () => {
             ))}
           </div>
         )} */}
-        {categories?.map((category) => (
-          <CategoryCatalogCard
-            key={category.id}
-            name={category.name}
-            productCount={category.productCount}
-            onEdit={() => handleClickEditCategory(category)}
-            onDelete={() => handleClickDeleteCategory(category.id)}
-          />
-        ))}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {categories?.map((category) => (
+            <CategoryCatalogCard
+              key={category.id}
+              name={category.name}
+              productCount={category.productCount}
+              onEdit={() => handleClickEditCategory(category)}
+              onDelete={() => handleClickDeleteCategory(category.id)}
+            />
+          ))}
+        </div>
       </div>
 
       <AlertDialog
@@ -191,7 +247,9 @@ const CategoriesPage: NextPageWithLayout = () => {
           </AlertDialogDescription>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <Button variant="destructive">Delete</Button>
+            <Button onClick={handleConfirmDeleteCategory} variant="destructive">
+              Delete
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
