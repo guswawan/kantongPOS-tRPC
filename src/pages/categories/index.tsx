@@ -143,7 +143,7 @@ const CategoriesPage: NextPageWithLayout = () => {
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Add New Category</AlertDialogTitle>
+                <AlertDialogTitle>Create New Category</AlertDialogTitle>
               </AlertDialogHeader>
               <Form {...createCategoryForm}>
                 <CategoryForm
