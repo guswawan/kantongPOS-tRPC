@@ -21,20 +21,23 @@ import {
   SheetTitle,
 } from "../ui/sheet";
 import { PaymentQRCode } from "./PaymentQrCode";
+import { useBasketStore } from "@/store/basket";
+import { api } from "@/utils/api";
 
 type OrderItemProps = {
   id: string;
   name: string;
   price: number;
   quantity: number;
+  imageUrl: string;
 };
 
-const OrderItem = ({ id, name, price, quantity }: OrderItemProps) => {
+const OrderItem = ({ id, name, price, quantity, imageUrl }: OrderItemProps) => {
   return (
     <div className="flex gap-3" key={id}>
       <div className="relative aspect-square h-20 shrink-0 overflow-hidden rounded-xl">
         <Image
-          src={PRODUCTS.find((p) => p.id === id)?.image ?? ""}
+          src={imageUrl}
           alt={name}
           fill
           unoptimized
@@ -79,21 +82,38 @@ export const CreateOrderSheet = ({
   open,
   onOpenChange,
 }: CreateOrderSheetProps) => {
+  const basketStore = useBasketStore();
+
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [paymentInfoLoading, setPaymentInfoLoading] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
-  const subtotal = 100000;
-  const tax = useMemo(() => subtotal * 0.17, [subtotal]);
+  const subtotal = basketStore.items.reduce((a, b) => {
+    return a + b.price * b.quantity;
+  }, 0);
+  const tax = useMemo(() => subtotal * 0.1, [subtotal]);
   const grandTotal = useMemo(() => subtotal + tax, [subtotal, tax]);
 
-  const handleCreateOrder = () => {
-    setPaymentDialogOpen(true);
-    setPaymentInfoLoading(true);
+  const { mutate: createOrder } = api.order.createOrder.useMutation({
+    onSuccess: () => {
+      alert("order created!");
+    },
+  });
 
-    setTimeout(() => {
-      setPaymentInfoLoading(false);
-    }, 3000);
+  const handleCreateOrder = () => {
+    // setPaymentDialogOpen(true);
+    // setPaymentInfoLoading(true);
+    // setTimeout(() => {
+    //   setPaymentInfoLoading(false);
+    // }, 3000);
+    createOrder({
+      orderItems: basketStore.items.map((item) => {
+        return {
+          productId: item.productId,
+          quantity: item.quantity,
+        };
+      }),
+    });
   };
 
   const handleRefresh = () => {
@@ -107,7 +127,7 @@ export const CreateOrderSheet = ({
           <SheetHeader>
             <SheetTitle className="text-2xl">Create New Order</SheetTitle>
             <SheetDescription>
-              Add products to your cart and create a new order.
+              Add products to your basket and create a new order.
             </SheetDescription>
           </SheetHeader>
 
@@ -115,6 +135,16 @@ export const CreateOrderSheet = ({
             <h1 className="text-xl font-medium">Order Items</h1>
             <div className="flex flex-col gap-6">
               {/* Map order items here */}
+              {basketStore.items.map((item) => (
+                <OrderItem
+                  key={item.productId}
+                  id={item.productId}
+                  name={item.name}
+                  price={item.price}
+                  quantity={item.quantity}
+                  imageUrl={item.imageUrl}
+                />
+              ))}
             </div>
           </div>
 

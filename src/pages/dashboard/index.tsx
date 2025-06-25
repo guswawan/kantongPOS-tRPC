@@ -9,22 +9,43 @@ import { CreateOrderSheet } from "@/components/shared/CreateOrderSheet";
 import { ProductMenuCard } from "@/components/shared/product/ProductMenuCard";
 import { Input } from "@/components/ui/input";
 import { CATEGORIES, PRODUCTS } from "@/data/mock";
-import { Search, ShoppingCart } from "lucide-react";
+import { Search, ShoppingBasket } from "lucide-react";
 import type { ReactElement } from "react";
 import { useMemo, useState } from "react";
 import type { NextPageWithLayout } from "../_app";
 import { Button } from "@/components/ui/button";
+import { api } from "@/utils/api";
+import { useBasketStore } from "@/store/basket";
 
 const DashboardPage: NextPageWithLayout = () => {
+  const basketStore = useBasketStore();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [orderSheetOpen, setOrderSheetOpen] = useState(false);
+
+  const { data: products, isLoading: isLoadingProducts } =
+    api.product.getProducts.useQuery();
 
   const handleCategoryClick = (categoryId: string) => {
     setSelectedCategory(categoryId);
   };
 
-  const handleAddToCart = (productId: string) => {};
+  const handleAddToBasket = (productId: string) => {
+    const productToAdd = products?.find((product) => product.id === productId);
+
+    if (!productToAdd) {
+      alert("Product not found!");
+      return;
+    }
+
+    basketStore.addToBasket({
+      productId: productToAdd.id,
+      name: productToAdd.name,
+      price: productToAdd.price,
+      imageUrl: productToAdd.imageUrl ?? "",
+    });
+  };
 
   const filteredProducts = useMemo(() => {
     return PRODUCTS.filter((product) => {
@@ -50,12 +71,14 @@ const DashboardPage: NextPageWithLayout = () => {
             </DashboardDescription>
           </div>
 
-          <Button
-            className="animate-in slide-in-from-right"
-            onClick={() => setOrderSheetOpen(true)}
-          >
-            <ShoppingCart /> Cart
-          </Button>
+          {!!basketStore.items.length && (
+            <Button
+              className="animate-in slide-in-from-right"
+              onClick={() => setOrderSheetOpen(true)}
+            >
+              <ShoppingBasket /> Basket
+            </Button>
+          )}
         </div>
       </DashboardHeader>
 
@@ -83,7 +106,7 @@ const DashboardPage: NextPageWithLayout = () => {
         </div>
 
         <div>
-          {filteredProducts.length === 0 ? (
+          {products?.length === 0 ? (
             <div className="my-8 flex flex-col items-center justify-center">
               <p className="text-muted-foreground text-center">
                 No products found
@@ -91,11 +114,22 @@ const DashboardPage: NextPageWithLayout = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-              {filteredProducts.map((product) => (
+              {/* {filteredProducts.map((product) => (
                 <ProductMenuCard
                   key={product.id}
                   product={product}
                   onAddToCart={handleAddToCart}
+                />
+              ))} */}
+              {products?.map((item) => (
+                <ProductMenuCard
+                  key={item.id}
+                  productId={item.id}
+                  name={item.name}
+                  price={item.price}
+                  imageUrl={item.imageUrl ?? "https://placehold.co/600x400"}
+                  // product={item}
+                  onAddToBasket={() => handleAddToBasket(item.id)}
                 />
               ))}
             </div>
