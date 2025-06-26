@@ -23,7 +23,7 @@ export const PaymentQRCode = (props: PaymentQRCodeProps) => {
         eyeRadius={8}
         bgColor={"#FFF"}
         value={props.qrString}
-        qrStyle="dots"
+        qrStyle="fluid"
       />
     </div>
   );

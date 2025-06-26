@@ -51,7 +51,7 @@ model Order {
     grandTotal Int
 
     //payment gateway fields
-    externalTransactionIs String?
+    externalTransactionId String?
     paymentMethodId String?
 
     status OrderStatus @default(AWAITING_PAYMENT)
