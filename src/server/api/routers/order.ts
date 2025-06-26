@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createQRIS } from "@/server/xendit";
 
 export const orderRouter = createTRPCRouter({
   createOrder: protectedProcedure
@@ -60,9 +61,26 @@ export const orderRouter = createTRPCRouter({
         }),
       });
 
+      const paymentRequest = await createQRIS({
+        amount: grandTotal,
+        orderId: order.id,
+      });
+
+      await ctx.db.order.update({
+        where: {
+          id: order.id,
+        },
+        data: {
+          externalTransactionId: paymentRequest.id, //untuk tracking trx
+          paymentMethodId: paymentRequest.paymentMethod.id, //menyimulasikan pembayaran
+        },
+      });
+
       return {
         order,
         orderItems,
+        qrString:
+          paymentRequest.paymentMethod.qrCode?.channelProperties?.qrString,
       };
     }),
 });
