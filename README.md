@@ -201,7 +201,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 ## Roadmap
 
 - [x] Products Management
-- [x] Payment Integration
+- [x] QRIS Payment Integration
 - [ ] Simulation Payment Process
 - [ ] GitHub
     - [ ] Issue Template 
