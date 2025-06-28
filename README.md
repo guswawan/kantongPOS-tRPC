@@ -204,7 +204,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 - [x] QRIS Payment Integration
 - [ ] Simulation Payment Process
 - [ ] GitHub
-    - [ ] Issue Template 
+    - [ ] Issue Template ( bug and feature )
 
 See the [open issues](https://github.com/guswawan/kantongPOS-tRPC/issues) for a full list of proposed features (and known issues).
 
