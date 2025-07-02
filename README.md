@@ -202,7 +202,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 
 - [x] Products Management
 - [x] QRIS Payment Integration
-- [ ] Simulation Payment Process
+- [ ] Simulation Payment Process (scan qrcode)
 - [ ] GitHub
     - [ ] Issue Template ( bug and feature )
 
